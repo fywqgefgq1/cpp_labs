@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test.dir/test.cpp.o CMakeFiles/corelib.dir/bitarray.cpp.o -o test  lib/libgtest_main.a lib/libgtest.a 

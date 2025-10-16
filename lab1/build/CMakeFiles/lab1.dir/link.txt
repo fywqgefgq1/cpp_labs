@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/lab1.dir/main.cpp.o CMakeFiles/corelib.dir/bitarray.cpp.o -o lab1 
