@@ -127,16 +127,26 @@ BitArray& BitArray::operator&=(const BitArray& b)
 {
     if (BITS_NUM == b.BITS_NUM)
     {
-        for (int i = 0; i < SIZE - 1; i++)
+        if (BITS_NUM%8 != 0)
         {
-            ARR[i] &= b.ARR[i];
-        }
-        for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
-        {
-            //std::cout<<" "<<i;
-            if ((ARR[i/8] >> i%8) != (b.ARR[i/8] >> i%8))
+            for (int i = 0; i < SIZE - 1; i++)
             {
-                set(i, 0);
+                ARR[i] &= b.ARR[i];
+            }
+            for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
+            {
+                //std::cout<<" "<<i;
+                if (((ARR[i/8] >> i%8)&1) != ((b.ARR[i/8] >> i%8)&1))
+                {
+                    set(i, 0);
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < SIZE; i++)
+            {
+                ARR[i] &= b.ARR[i];
             }
         }
     }
@@ -146,20 +156,31 @@ BitArray& BitArray::operator|=(const BitArray& b)
 {
     if (BITS_NUM == b.BITS_NUM)
     {
-        for (int i = 0; i < SIZE - 1; i++)
+        // std::cout<<SIZE<<std::endl;
+        if (BITS_NUM%8 != 0)
         {
-            ARR[i] |= b.ARR[i];
-        }
-        for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
-        {
-            //std::cout<<" "<<i;
-            if ((ARR[i/8] >> i%8) == (b.ARR[i/8] >> i%8) && (ARR[i/8] >> i%8) == 0)
+            for (int i = 0; i < SIZE - 1; i++)
             {
-                set(i, 0);
+                ARR[i] |= b.ARR[i];
             }
-            else
+            for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
             {
-                set(i, 1);
+                //std::cout<<" "<<i;
+                if (((ARR[i/8] >> i%8)&1) || ((b.ARR[i/8] >> i%8)&1))
+                {
+                    set(i, 1);
+                }
+                else
+                {
+                    set(i, 0);
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < SIZE; i++)
+            {
+                ARR[i] |= b.ARR[i];
             }
         }
     }
@@ -169,22 +190,33 @@ BitArray& BitArray::operator^=(const BitArray& b)
 {
     if (BITS_NUM == b.BITS_NUM)
     {
-        for (int i = 0; i < SIZE - 1; i++)
+        if (BITS_NUM%8 != 0)
         {
-            ARR[i] ^= b.ARR[i];
+            for (int i = 0; i < SIZE - 1; i++)
+            {
+                ARR[i] ^= b.ARR[i];
+            }
+            for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
+            {
+                //std::cout<<" "<<i;
+                if (((ARR[i/8] >> i%8)&1) == ((b.ARR[i/8] >> i%8)&1))
+                {
+                    set(i, 0);
+                }
+                else
+                {
+                    set(i, 1);
+                }
+            }
         }
-        for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
+        else
         {
-            //std::cout<<" "<<i;
-            if ((ARR[i/8] >> i%8) == (b.ARR[i/8] >> i%8))
+            for (int i = 0; i < SIZE; i++)
             {
-                set(i, 0);
-            }
-            else
-            {
-                set(i, 1);
+                ARR[i] &= b.ARR[i];
             }
         }
+        
     }
     return *this;
 }

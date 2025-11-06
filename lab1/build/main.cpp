@@ -12,30 +12,30 @@ int main()
     //     return 0;
     // }
     
-    // BitArray A(16, 0b0110000101100010);
-    // A.resize(20, 0);
-    // BitArray B(16, 0b0110111001100111);
-    // cout<<A.to_string(true, '_')<<endl;
-    // cout<<B.to_string(true, '_')<<endl;
+    BitArray A(17, 0b10110000101100010);
+    //A.resize(20, 0);
+    BitArray B(17, 0b00110111001100111);
+    cout<<A.to_string(true, '_')<<endl;
+    cout<<B.to_string(true, '_')<<endl;
     
-    // cout<<(A | B).to_string(true, '_')<<endl;
-    // cout<<(A & B).to_string(true, '_')<<endl;
-    // cout<<(A ^ B).to_string(true, '_')<<endl;
+    cout<<(A | B).to_string(true, '_')<<endl;
+    cout<<(A & B).to_string(true, '_')<<endl;
+    cout<<(A ^ B).to_string(true, '_')<<endl;
 
     // cout<<(A == B)<<endl;
     // A = B;
     // cout<<A.to_string(true, '_')<<endl;
     // cout<<(A == B)<<endl;
     
-    BitArray A(16, 0b0110111001100111);
-    cout<<A.to_string(true, '_')<<endl;
-    cout<<(~A).to_string(true, '_')<<endl;
-    cout<<(A>>4).to_string(true, '_')<<endl;
-    cout<<(A<<4).to_string(true, '_')<<endl;
-    cout<<(A>>8).to_string(true, '_')<<endl;
-    cout<<(A<<8).to_string(true, '_')<<endl;
-    cout<<(A>>16).to_string(true, '_')<<endl;
-    cout<<(A<<16).to_string(true, '_')<<endl;
+    // BitArray A(16, 0b0110111001100111);
+    // cout<<A.to_string(true, '_')<<endl;
+    // cout<<(~A).to_string(true, '_')<<endl;
+    // cout<<(A>>4).to_string(true, '_')<<endl;
+    // cout<<(A<<4).to_string(true, '_')<<endl;
+    // cout<<(A>>8).to_string(true, '_')<<endl;
+    // cout<<(A<<8).to_string(true, '_')<<endl;
+    // cout<<(A>>16).to_string(true, '_')<<endl;
+    // cout<<(A<<16).to_string(true, '_')<<endl;
 
     // A.resize(12);
     // cout<<A.to_string()<<endl;

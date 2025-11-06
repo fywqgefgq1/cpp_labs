@@ -62,6 +62,11 @@ namespace {
         EXPECT_EQ((TestArray == BitArray(20, 0b00000110000101100010)), true);
         TestArray.resize(12);
         EXPECT_EQ((TestArray == BitArray(12, 0b000101100010)), true);
+    }
+
+    TEST(BitArrayTest, pushback)
+    {
+        BitArray TestArray(12, 0b000101100010);
         TestArray.push_back(1);
         TestArray.push_back(0);
         EXPECT_EQ((TestArray == BitArray(14, 0b01000101100010)), true);
@@ -80,7 +85,7 @@ namespace {
     {
         BitArray TestArray1(16, 0b0110000101100010);
         BitArray TestArray2(16, 0b0110111001100111);
-        EXPECT_EQ((TestArray1 | TestArray2).to_string(true, '_'), "01111111_01100111");
+        EXPECT_EQ((TestArray1 | TestArray2).to_string(true, '_'), "01101111_01100111");
         EXPECT_EQ((TestArray1 & TestArray2).to_string(true, '_'), "01100000_01100010");
         EXPECT_EQ((TestArray1 ^ TestArray2).to_string(true, '_'), "00001111_00000101");
         EXPECT_EQ((~TestArray1).to_string(true, '_'), "10011110_10011101");
