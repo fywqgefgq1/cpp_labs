@@ -133,7 +133,7 @@ BitArray& BitArray::operator&=(const BitArray& b)
             {
                 ARR[i] &= b.ARR[i];
             }
-            for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
+            for (int i = (SIZE - 1) * 8; i < BITS_NUM; i++)
             {
                 //std::cout<<" "<<i;
                 if (((ARR[i/8] >> i%8)&1) != ((b.ARR[i/8] >> i%8)&1))
@@ -163,7 +163,7 @@ BitArray& BitArray::operator|=(const BitArray& b)
             {
                 ARR[i] |= b.ARR[i];
             }
-            for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
+            for (int i = (SIZE - 1) * 8; i < BITS_NUM; i++)
             {
                 //std::cout<<" "<<i;
                 if (((ARR[i/8] >> i%8)&1) || ((b.ARR[i/8] >> i%8)&1))
@@ -196,7 +196,7 @@ BitArray& BitArray::operator^=(const BitArray& b)
             {
                 ARR[i] ^= b.ARR[i];
             }
-            for (int i = BITS_NUM - (SIZE - 1) * 8; i < BITS_NUM; i++)
+            for (int i = (SIZE - 1) * 8; i < BITS_NUM; i++)
             {
                 //std::cout<<" "<<i;
                 if (((ARR[i/8] >> i%8)&1) == ((b.ARR[i/8] >> i%8)&1))
@@ -213,7 +213,7 @@ BitArray& BitArray::operator^=(const BitArray& b)
         {
             for (int i = 0; i < SIZE; i++)
             {
-                ARR[i] &= b.ARR[i];
+                ARR[i] ^= b.ARR[i];
             }
         }
         
