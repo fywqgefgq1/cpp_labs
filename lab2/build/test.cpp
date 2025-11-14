@@ -112,9 +112,9 @@ TEST(GameTest, TTPlayerGameNoHistory)
     EXPECT_EQ(*(game.GetHistory()), "DDCDDDDDD");
 }
 
-TEST(GameTest, TTPlayerHistory) 
+TEST(GameTest, TTPlayerExistingHistory) 
 {
-    std::string players_STRARR[] = {"TT", "D", "D"};
+    std::string players_STRARR[] = {"TT", "Random", "Random"};
     Game game(3, players_STRARR);
 
     std::string* history = game.GetHistory();
