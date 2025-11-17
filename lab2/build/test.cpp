@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "game.h"
-
+#include <array>
 
 
 TEST(GameTest, InitPlayers) 
@@ -101,7 +101,7 @@ TEST(GameTest, TTPlayerFirstMove)
 {
     Game game;
     TTPlayer player("TT");
-    EXPECT_EQ(player.Move(&game, 0), 'C');
+    EXPECT_EQ(player.MoveTT(&game, 0), 'C');
 }
 
 TEST(GameTest, TTPlayerGameNoHistory) 
@@ -120,18 +120,38 @@ TEST(GameTest, TTPlayerExistingHistory)
     std::string* history = game.GetHistory();
     *history = "CDD";
 
-    char move = game.GetPlayer(0)->Move(&game, 3);
+    TTPlayer* testplr = dynamic_cast<TTPlayer*>(game.GetPlayer(0));
+    char move = testplr->MoveTT(&game, 3);
     EXPECT_EQ(move, 'D');
 }
 
-TEST(GameTest, CountThreeFunction) 
+TEST(GameTest, CountFunc)
 {
-    EXPECT_EQ(count_three('C', 'C', 'C'), 7);
-    EXPECT_EQ(count_three('D', 'D', 'D'), 1);
-    EXPECT_EQ(count_three('C', 'C', 'D'), 3);
-    EXPECT_EQ(count_three('D', 'D', 'C'), 5);
-    EXPECT_EQ(count_three('C', 'D', 'D'), 0);
-    EXPECT_EQ(count_three('D', 'C', 'C'), 9);
+    Game game(3);
+    std::string* history = game.GetHistory();
+    int* scoreboard = game.GetScoreboard();
+    std::map<std::string, std::array<int, 3>> checkTable = {
+        {"CCC", {7,7,7}},
+        {"CCD", {3,3,9}},
+        {"CDC", {3,9,3}},
+        {"CDD", {0,5,5}},
+        {"DCC", {9,3,3}},
+        {"DCD", {5,0,5}},
+        {"DDC", {5,5,0}},
+        {"DDD", {1,1,1}},
+    };
+    for (std::pair<const std::string, std::array<int, 3>> set : checkTable)
+    {
+        *history = set.first;
+        scoreboard[0] = 0;
+        scoreboard[1] = 0;
+        scoreboard[2] = 0;
+        count_three(&game, 0, 1, 2);
+        EXPECT_EQ(scoreboard[0], set.second[0]);
+        EXPECT_EQ(scoreboard[1], set.second[1]);
+        EXPECT_EQ(scoreboard[2], set.second[2]);
+    }
+
 }
 
 TEST(GameTest, ScoreCounting) 

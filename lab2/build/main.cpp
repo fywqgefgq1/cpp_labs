@@ -7,7 +7,7 @@ int main()
     string players[] = {"C", "D", "TT", "D", "TT"};
     Game Main_Game(5, players);
     // cout<<Main_Game.GetPlayer(0)->Name()<<endl;
-    Play(&Main_Game, "detailed");
+    Play(&Main_Game, "tournament", 5);
     cout<<*(Main_Game.GetHistory())<<endl;
     int *score = Main_Game.GetScoreboard();
     for (int i = 0; i < Main_Game.GetAmount(); i++)

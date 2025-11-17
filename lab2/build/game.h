@@ -28,10 +28,8 @@ class Player
         {
             return score;
         }
-        virtual char Move(Game *game = nullptr, int i = 0) 
+        virtual char Move() 
         {
-            (void)game;
-            (void)i;
             return 'N';
         }
 };
@@ -46,28 +44,28 @@ class Random_Player : public Player
             std::random_device dev;
             rng.seed(dev());
         }
-        char Move(Game *game = nullptr, int i = 0);
+        char Move();
 };
 
 class CPlayer : public Player
 {
     public:
         CPlayer(std::string Name) : Player(Name) {};
-        char Move(Game *game = nullptr, int i = 0);
+        char Move();
 };
 
 class DPlayer : public Player
 {
     public:
         DPlayer(std::string Name) : Player(Name) {};
-        char Move(Game *game = nullptr, int i = 0);
+        char Move();
 };
 
 class TTPlayer : public Player
 {
     public:
         TTPlayer(std::string Name) : Player(Name) {};
-        char Move(Game *game, int i);
+        char MoveTT(Game *game, int i);
 };
 
 class Game
@@ -155,6 +153,19 @@ class Game
         {
             return scoreboard;
         }
+        void ClearScoreboard()
+        {
+            for (int i = 0; i < playersAmount; i++)
+            {
+                scoreboard[i] = 0;
+            }
+            return;
+        }
+        void ClearHistory()
+        {
+            history = "";
+            return;
+        }
         std::string* GetHistory()
         {
             return &history;
@@ -166,6 +177,6 @@ class Game
 };
 
 
-int count_three(char a, char b, char c);
+void count_three(Game* Game_MAIN, int i, int j, int k);
 void CountScore(Game* Game_MAIN);
 void Play(Game* Game_MAIN, std::string mode, int rounds = 1);

@@ -185,4 +185,11 @@ CMakeFiles/corelib.dir/game.cpp.o: /mnt/c/prj/labs/lab2/build/game.cpp \
  /usr/include/c++/13/bits/random.tcc /usr/include/c++/13/numeric \
  /usr/include/c++/13/bits/stl_numeric.h \
  /usr/include/c++/13/pstl/glue_numeric_defs.h \
- /usr/include/c++/13/pstl/execution_defs.h
+ /usr/include/c++/13/pstl/execution_defs.h /usr/include/c++/13/map \
+ /usr/include/c++/13/bits/stl_tree.h \
+ /usr/include/c++/13/ext/aligned_buffer.h \
+ /usr/include/c++/13/bits/node_handle.h \
+ /usr/include/c++/13/bits/stl_map.h \
+ /usr/include/c++/13/bits/stl_multimap.h \
+ /usr/include/c++/13/bits/erase_if.h /usr/include/c++/13/array \
+ /usr/include/c++/13/compare
