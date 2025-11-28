@@ -4,10 +4,11 @@
 int main()
 {
     using namespace std;
-    string players[] = {"C", "D", "TT", "D", "TT"};
+    string players[] = {"C", "D", "TT", "A", "Meta"};
     Game Main_Game(5, players);
+    Play(&Main_Game, "tournament", 5, 0, nullptr);
     // cout<<Main_Game.GetPlayer(0)->Name()<<endl;
-    Play(&Main_Game, "tournament", 5);
+    //Play(&Main_Game, "tournament", 2, 0, nullptr);
     cout<<*(Main_Game.GetHistory())<<endl;
     int *score = Main_Game.GetScoreboard();
     for (int i = 0; i < Main_Game.GetAmount(); i++)
