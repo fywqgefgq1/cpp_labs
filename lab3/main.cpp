@@ -127,69 +127,27 @@ class SoundFile
             Output.close();
             return true;
         }
-};
+        void Write16Bits(short bits, uint32 position)
+        {
+            if (bits > 32767) bits = 32767;
+            if (bits < -32768) bits = -32768;
 
-class HelpGenerator 
-{
-private:
-    std::map<std::string, CommandInfo> commands;
-    
-public:
-    HelpGenerator() 
-    {
-        initializeCommands();
-    }
-    
-    void initializeCommands() 
-    {
-        commands["mute"] = 
-        {
-            "mute",
-            "mute time interval",
-            {"[$file]", "start_time", "end_time"},
-            "mute $1 0 5"
-        };
-        
-        commands["volume"] = 
-        {
-            "volume",
-            "change volume of a time interval",
-            {"[$file]", "multiplier", "start_time", "end_time"},
-            "volume $1 2.0 10 20"
-        };
-        
-        commands["mix"] = 
-        {
-            "mix",
-            "mix 2 sound files",
-            {"$target_file", "[$source_file]", "target_start", "target_end", "source_start"},
-            "mix $1 $2 0 10 5"
-        };
-    }
-
-    void Help()
-    {
-        for (const auto& cmd : commands) 
-        {
-            const CommandInfo& info = cmd.second;
-            std::cout<< "\n" << info.name << "\n";
-            std::cout<<info.description << "\n";
-            std::cout<< "params: ";
-            for (int i = 0; i < info.parameters.size(); ++i) 
-            {
-                if (i > 0) std::cout << ", ";
-                std::cout<<info.parameters[i];
-            }
-            std::cout<<"\n";
-            std::cout<<"example: "<<info.example<<"\n";
+            (audioData)[position] = bits & 0xFF;
+            (audioData)[position + 1] = (bits >> 8) & 0xFF;
         }
-    }
+        short Read16Bits(uint32 position)
+        {
+            short sample = ((short)(audioData[position] & 0xFF)) |
+                            ((short)(audioData[position + 1] & 0xFF) << 8);
+            return sample;
+        }
 };
 
 class SoundProcessor
 {
     protected:
         SoundFile* sound;
+        CommandInfo Info;
     public:
         SoundProcessor() = default;
         SoundProcessor(SoundFile* soundfile)
@@ -200,112 +158,22 @@ class SoundProcessor
         {
             sound = stoset;
         }
-};
-
-class MuteProcessor : public SoundProcessor
-{
-    public:
-        MuteProcessor() = default;
-        MuteProcessor(SoundFile* soundfile) : SoundProcessor(soundfile) {};
-    void Process(uint32 start, uint32 end)
-    {
-        WavHeader* Header = sound->getHeader();
-        std::vector<char>* audioData = sound->getAudiodata();
-
-        uint32 startpos = TimeToBytePosition(start, Header);
-        uint32 endpos  = TimeToBytePosition(end, Header);
-        memset(&(*audioData)[startpos], 0, (endpos - startpos));
-    }
-};
-
-class MixerProcessor : public SoundProcessor
-{
-    private:
-        SoundFile* audio2;
-    public:
-        MixerProcessor() = default;
-        MixerProcessor(SoundFile* soundfile1, SoundFile* soundfile2) : SoundProcessor(soundfile1) 
+        bool ParseCommandLine(string& token_str, vector<SoundFile>* s_files);
+        void WriteInfo()
         {
-            audio2 = soundfile2;
-        };
-        void SetSF2(SoundFile* stoset)
-        {
-            audio2 = stoset;
-        }
-        void Process(uint32 start_time, uint32 end_time, uint32 start_time1 = 0)
-        {
-            WavHeader* Header = sound->getHeader();
-            std::vector<char>* audioData = sound->getAudiodata();
-
-            uint32 startpos = TimeToBytePosition(start_time, Header);
-            uint32 endpos  = TimeToBytePosition(end_time, Header);
-
-            if (endpos - startpos < 0) return;
-
-            WavHeader* audio2head = audio2->getHeader();
-            uint32 startpos1 = TimeToBytePosition(start_time1, audio2head);
-            
-            std::vector<char>* audio2data = audio2->getAudiodata();
-            uint32 avaliable_bytes = audio2data->size() - startpos1;
-            uint32 mixlen = endpos - startpos;
-            uint32 bytes_to_mix = (avaliable_bytes < mixlen) ? avaliable_bytes : mixlen;
-
-            for (uint32 i = 0; i < bytes_to_mix; i+=2)
+            cout<<endl;
+            cout<<Info.name<<endl;
+            cout<<Info.description<<endl;
+            cout<< "params: ";
+            for (int i = 0; i < Info.parameters.size(); ++i) 
             {
-                short sample1 = (*audioData)[startpos + i] | ((*audioData)[startpos + i+1] << 8);
-                short sample2 = (*audio2data)[startpos1 + i] | ((*audio2data)[startpos1+i+1] << 8);
-
-                short mixed = sample1 + sample2;
-
-                if (mixed > 32767) mixed = 32767;
-                if (mixed < -32768) mixed = -32768;
-
-                (*audioData)[startpos + i] = mixed & 0xFF;
-                (*audioData)[startpos + i + 1] = (mixed >> 8) & 0xFF;
+                if (i > 0) cout<<", ";
+                cout<<Info.parameters[i];
             }
-
-            if (mixlen > bytes_to_mix)
-            {
-                memset(&(*audioData)[startpos + bytes_to_mix], 0, mixlen - bytes_to_mix);
-            }
-
-            // memcpy(&(*audioData)[startpos], &(*audio2data)[startpos1], endpos - startpos);
-            // if (endpos - startpos > avaliable_bytes)
-            // {
-            //     memset(&(*audioData)[startpos + avaliable_bytes], 0, endpos - startpos - avaliable_bytes);
-            // }
+            cout<<endl;
+            cout<<"example: "<<Info.example<<endl;
         }
-};
-
-class VolumeProcessor : public SoundProcessor
-{
-    public:
-        VolumeProcessor() = default;
-        VolumeProcessor(SoundFile* soundfile) : SoundProcessor(soundfile) {};
-        void Process(double multiplier, uint32 start = 0, uint32 end = 0)
-        {
-            if (multiplier == 1) return;
-            end = (!end) * (sound->audioLength()) + end; 
-            WavHeader* Header = sound->getHeader();
-            vector<char>* audioData = sound->getAudiodata();
-
-            uint32 startpos = TimeToBytePosition(start, Header);
-            uint32 endpos  = TimeToBytePosition(end, Header);
-
-            for (uint32 i = startpos; i < endpos; i+=2)
-            {
-                short sample = ((*audioData)[i] | ((*audioData)[i+1] << 8));
-                double res_sample = sample * multiplier;
-                //if (res_sample > 16 * 1024) res_sample = 16 * 1024;
-
-                if (res_sample > 32767.0) res_sample = 32767.0;
-                if (res_sample < -32768.0) res_sample = -32768.0;
-
-                sample = (short)(res_sample);
-                (*audioData)[i] = (sample & 0xFF);
-                (*audioData)[i+1] = ((sample>>8) & 0xFF);
-            }
-        }
+        
 };
 
 bool CheckifFileNumberValid(int number, vector<SoundFile>* s_files)
@@ -355,14 +223,252 @@ bool ExtractTimeParam(string& token, uint32* time_value)
     }
 }
 
+class MuteProcessor : public SoundProcessor
+{
+    public:
+        MuteProcessor()
+        {
+            Info = {
+            "mute",
+            "mute time interval",
+            {"[$file]", "start_time", "end_time"},
+            "mute $1 0 5"
+            };
+        }
+        MuteProcessor(SoundFile* soundfile) : SoundProcessor(soundfile) {}
+        void Process(uint32 start, uint32 end)
+        {
+            WavHeader* Header = sound->getHeader();
+            std::vector<char>* audioData = sound->getAudiodata();
+
+            uint32 startpos = TimeToBytePosition(start, Header);
+            uint32 endpos  = TimeToBytePosition(end, Header);
+            memset(&(*audioData)[startpos], 0, (endpos - startpos));
+        }
+        bool ParseCommandLine(string& command, vector<SoundFile>* s_files)
+        {
+            SoundFile* sf;
+            int number = 0;
+            uint32 start_time = 0;
+            uint32 end_time = 0;
+            string token_str = command;
+
+            if (command[0] == '$')
+            {
+                if (!ExtractFileNumber(token_str, number, s_files)) return false;
+                command = strtok(NULL, " "); 
+            }
+            if (!ExtractTimeParam(token_str, &start_time)) return false;
+            command = strtok(NULL, " ");
+            token_str = command;
+            if (!ExtractTimeParam(token_str, &end_time)) return false;
+            sf = &(*s_files)[number];
+
+            if (start_time >= end_time || !sf->isValid())
+            {
+                cerr<<"INVALID MUTEPROCESSOR PARAMS"<<endl;
+                return false;
+            }
+
+            SetSF(sf);
+            Process(start_time, end_time);
+            return true;
+        }
+};
+
+class MixerProcessor : public SoundProcessor
+{
+    private:
+        SoundFile* sound2;
+    public:
+        MixerProcessor()
+        {
+            Info = {
+            "mix",
+            "mix 2 sound files",
+            {"$target_file", "[$source_file]", "target_start", "target_end", "source_start"},
+            "mix $1 $2 0 10 5"
+            };
+        }
+        MixerProcessor(SoundFile* soundfile1, SoundFile* soundfile2) : SoundProcessor(soundfile1) 
+        {
+            sound2 = soundfile2;
+        };
+        void SetSF2(SoundFile* stoset)
+        {
+            sound2 = stoset;
+        }
+        void Process(uint32 start_time, uint32 end_time, uint32 start_time1 = 0)
+        {
+            WavHeader* Header = sound->getHeader();
+            std::vector<char>* audioData = sound->getAudiodata();
+
+            uint32 startpos = TimeToBytePosition(start_time, Header);
+            uint32 endpos  = TimeToBytePosition(end_time, Header);
+
+            if (endpos - startpos < 0) return;
+
+            WavHeader* sound2head = sound2->getHeader();
+            uint32 startpos1 = TimeToBytePosition(start_time1, sound2head);
+            
+            std::vector<char>* sound2data = sound2->getAudiodata();
+            uint32 avaliable_bytes = sound2data->size() - startpos1;
+            uint32 mixlen = endpos - startpos;
+            uint32 bytes_to_mix = (avaliable_bytes < mixlen) ? avaliable_bytes : mixlen;
+
+            for (uint32 i = 0; i < bytes_to_mix; i+=2)
+            {
+                short sample1 = sound->Read16Bits(startpos + i);
+                short sample2 = sound2->Read16Bits(startpos1 + i);
+                short mixed = sample1 + sample2;
+                sound->Write16Bits(mixed, startpos + i);
+            }
+
+            // if (mixlen > bytes_to_mix)
+            // {
+            //     memset(&(*audioData)[startpos + bytes_to_mix], 0, mixlen - bytes_to_mix);
+            // }
+
+            // memcpy(&(*audioData)[startpos], &(*audio2data)[startpos1], endpos - startpos);
+            // if (endpos - startpos > avaliable_bytes)
+            // {
+            //     memset(&(*audioData)[startpos + avaliable_bytes], 0, endpos - startpos - avaliable_bytes);
+            // }
+        }
+        bool ParseCommandLine(string& command, vector<SoundFile>* s_files)
+        {
+            SoundFile* sf1;
+            SoundFile* sf2;
+            int number = 0;
+            uint32 start_time = 0;
+            uint32 end_time = 0;
+            uint32 start_time1 = 0;
+            string token_str = command;
+
+            if (!ExtractFileNumber(token_str, number, s_files)) return false;
+            sf1 = &(*s_files)[0];
+            sf2 = &(*s_files)[number];
+            command = strtok(NULL, " ");
+            token_str = command;
+            if (command[0] == '$')
+            {
+                if (!ExtractFileNumber(token_str, number, s_files)) return false;
+                sf1 = sf2;
+                sf2 = &(*s_files)[number];
+                command = strtok(NULL, " ");
+            }
+            // cout<<sf1->audioLength()<<" "<<sf2->audioLength()<<endl;
+            //cout<<number<<"A"<<command<<endl;
+            if (!ExtractTimeParam(token_str, &start_time)) return false;
+            command = strtok(NULL, " ");
+            token_str = command;
+
+            if (!ExtractTimeParam(token_str, &end_time)) return false;
+            command = strtok(NULL, " ");
+            token_str = command;
+
+            start_time1 = stoi(command);
+            //cout<<sf1->audioLength()<<" "<<sf2->audioLength()<<" "<<par1<<" "<<par2<<" "<<par3<<endl;
+            //cout<<par1<<" "<<par2<<" "<<par3<<endl;
+
+            if (start_time > end_time || start_time1 > sf2->audioLength() || !sf1->isValid() || !sf2->isValid())
+            {
+                cerr<<"INVALID MIXERPROCESSOR PARAMS"<<endl;
+                return false;
+            }
+
+            SetSF(sf1);
+            SetSF2(sf2);
+            Process(start_time, end_time, start_time1);
+            return true;
+        }
+};
+
+class VolumeProcessor : public SoundProcessor
+{
+    public:
+        VolumeProcessor()
+        {
+            Info = {"volume",
+        "change volume of a time interval",
+        {"[$file]", "multiplier", "start_time", "end_time"},
+        "volume $1 2.0 10 20"};
+        }
+        VolumeProcessor(SoundFile* soundfile) : SoundProcessor(soundfile) {};
+        void Process(double multiplier, uint32 start = 0, uint32 end = 0)
+        {
+            if (multiplier == 1) return;
+            if (end == 0)
+            {
+                end = sound->audioLength();
+            }
+            WavHeader* Header = sound->getHeader();
+            vector<char>* audioData = sound->getAudiodata();
+
+            uint32 startpos = TimeToBytePosition(start, Header);
+            uint32 endpos  = TimeToBytePosition(end, Header);
+
+            for (uint32 i = startpos; i < endpos; i+=2)
+            {
+                short sample = sound->Read16Bits(i);
+                short res_sample = sample * multiplier;
+                sound->Write16Bits(res_sample, i);
+            }
+        }
+        bool ParseCommandLine(string& command, vector<SoundFile>* s_files)
+        {
+            string token_str = command;
+
+            SoundFile* sf;
+            int number = 0;
+            double multiplier = 0;
+            uint32 start_time = 0;
+            uint32 end_time = 0;
+
+            if (command[0] == '$')
+            {
+                if (!ExtractFileNumber(token_str, number, s_files)) return false;
+                command = strtok(NULL, " "); 
+            }
+            multiplier = stod(command);
+            command = strtok(NULL, " ");
+            token_str = command;
+            if (!ExtractTimeParam(token_str, &start_time)) return false;
+
+            command = strtok(NULL, " ");
+            token_str = command;
+            if (!ExtractTimeParam(token_str, &end_time)) return false;
+
+            sf = &(*s_files)[number];
+            if (start_time >= end_time || multiplier < 0 || !sf->isValid())
+            {
+                cerr<<"INVALID VOLUMEPROCESSOR PARAMS"<<endl;
+                return false;
+            }
+
+            SetSF(sf);
+            Process(multiplier, start_time, end_time);
+            return true;
+        }
+};
+
 void ParseConfig(int argc, char *argv[])
 {
     const string config_dir = argv[2];
     const string output_dir = argv[3];
+    const char mode = argv[1][1];
 
     MuteProcessor mpr;
     MixerProcessor mixpr;
     VolumeProcessor vpr;
+
+    if (mode == 'h')
+    {
+        mpr.WriteInfo();
+        mixpr.WriteInfo();
+        vpr.WriteInfo();
+        return;
+    }
 
     vector<SoundFile> s_files;
     for (int i = 4; i < argc; i++)
@@ -394,121 +500,22 @@ void ParseConfig(int argc, char *argv[])
         if (command_line[0] == '#') continue;
         cout<<command_line<<endl;
         string command = strtok(command_line.data(), " ");
-        string token_str;
         //cout<<command<<endl;
 
         if (command == "mute")
         {
-            SoundFile* sf;
-            int number = 0;
-            uint32 start_time = 0;
-            uint32 end_time = 0;
-
             command = strtok(NULL, " ");
-            token_str = command;
-
-            if (command[0] == '$')
-            {
-                ExtractFileNumber(token_str, number, &s_files);
-                command = strtok(NULL, " "); 
-            }
-            ExtractTimeParam(token_str, &start_time);
-            command = strtok(NULL, " ");
-            token_str = command;
-            ExtractTimeParam(token_str, &end_time);
-            sf = &s_files[number];
-
-            if (start_time >= end_time || !sf->isValid())
-            {
-                cerr<<"INVALID MUTEPROCESSOR PARAMS"<<endl;
-                return;
-            }
-
-            mpr.SetSF(sf);
-            mpr.Process(start_time, end_time);
+            if (!mpr.ParseCommandLine(command, &s_files)) return;
         }
         else if (command == "volume")
         {
-            SoundFile* sf;
-            int number = 0;
-            double multiplier = 0;
-            uint32 start_time = 0;
-            uint32 end_time = 0;
-
             command = strtok(NULL, " ");
-            token_str = command;
-
-            if (command[0] == '$')
-            {
-                ExtractFileNumber(token_str, number, &s_files);
-                command = strtok(NULL, " "); 
-            }
-            multiplier = stod(command);
-            command = strtok(NULL, " ");
-            token_str = command;
-            ExtractTimeParam(token_str, &start_time);
-
-            command = strtok(NULL, " ");
-            token_str = command;
-            ExtractTimeParam(token_str, &end_time);
-
-            sf = &s_files[number];
-            if (start_time >= end_time || multiplier < 0 || !sf->isValid())
-            {
-                cerr<<"INVALID VOLUMEPROCESSOR PARAMS"<<endl;
-                return;
-            }
-
-            vpr.SetSF(sf);
-            vpr.Process(multiplier, start_time, end_time);
+            if (!vpr.ParseCommandLine(command, &s_files)) return;
         }
         else if (command == "mix")
         {
-            SoundFile* sf1;
-            SoundFile* sf2;
-            int number = 0;
-            uint32 start_time = 0;
-            uint32 end_time = 0;
-            uint32 start_time1 = 0;
-
             command = strtok(NULL, " ");
-            token_str = command;
-
-            ExtractFileNumber(token_str, number, &s_files);
-            sf1 = &s_files[0];
-            sf2 = &s_files[number];
-            command = strtok(NULL, " ");
-            token_str = command;
-            if (command[0] == '$')
-            {
-                ExtractFileNumber(token_str, number, &s_files);
-                sf1 = sf2;
-                sf2 = &s_files[number];
-                command = strtok(NULL, " ");
-            }
-            // cout<<sf1->audioLength()<<" "<<sf2->audioLength()<<endl;
-            //cout<<number<<"A"<<command<<endl;
-            ExtractTimeParam(token_str, &start_time);
-            command = strtok(NULL, " ");
-            token_str = command;
-
-            ExtractTimeParam(token_str, &end_time);
-            command = strtok(NULL, " ");
-            token_str = command;
-
-            start_time1 = stoi(command);
-            //cout<<sf1->audioLength()<<" "<<sf2->audioLength()<<" "<<par1<<" "<<par2<<" "<<par3<<endl;
-            //cout<<par1<<" "<<par2<<" "<<par3<<endl;
-
-            if (start_time > end_time || start_time1 > sf2->audioLength() || !sf1->isValid() || !sf2->isValid())
-            {
-                cerr<<"INVALID MIXERPROCESSOR PARAMS"<<endl;
-                return;
-            }
-
-            mixpr.SetSF(sf1);
-            mixpr.SetSF2(sf2);
-            mixpr.Process(start_time, end_time, start_time1);
+            if (!mixpr.ParseCommandLine(command, &s_files)) return;
         }
     }
     s_files[0].Write(output_dir);
@@ -517,10 +524,6 @@ void ParseConfig(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-    HelpGenerator hgen;
-    char mode = argv[1][1];
-    if (mode == 'c') ParseConfig(argc, argv);
-    else if (mode == 'h') hgen.Help();
-    else cout<<"INVALID FLAG"<<endl;
+    ParseConfig(argc, argv);
     return 0;
 }
